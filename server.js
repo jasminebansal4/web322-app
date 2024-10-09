@@ -1,53 +1,92 @@
+// https://render.com/docs/node-version  DEPLOYMENT LINK
+/*********************************************************************************
+WEB322 – Assignment 02
+I declare that this assignment is my own work in accordance with Seneca Academic Policy. No part * of this assignment has
+been copied manually or electronically from any other source (including 3rd party web sites) or distributed to other students.
+Name: _Jasmine_____________________
+Student ID: __101594232____________
+Date: ________________09-10-2024
+Cyclic Web App URL: _______________________________________________________
+GitHub Repository URL: ______________________________________________________
+********************************************************************************/
+
 const express = require('express');
-const storeService = require('./store-service'); // Assuming the correct path to store-service
+const path = require('path');
+const storeService = require('./store-service');
+
 const app = express();
 
-// Use static middleware to serve static files
+
 app.use(express.static('public'));
 
-// Root route redirect to /about
+
 app.get('/', (req, res) => {
     res.redirect('/about');
 });
 
-// Route to serve the about page
 app.get('/about', (req, res) => {
-    res.sendFile(__dirname + '/views/about.html');
+    res.sendFile(path.join(__dirname, 'views', 'about.html'));
 });
 
-// Shop route to get published items
-app.get('/shop', (req, res) => {
-    storeService.getPublishedItems()
-        .then(items => res.json(items))
-        .catch(err => res.status(500).json({ message: err }));
-});
-
-// Items route to get all items
-app.get('/items', (req, res) => {
-    storeService.getAllItems()
-        .then(items => res.json(items))
-        .catch(err => res.status(500).json({ message: err }));
-});
-
-// Categories route to get all categories
-app.get('/categories', (req, res) => {
-    storeService.getCategories()
-        .then(categories => res.json(categories))
-        .catch(err => res.status(500).json({ message: err }));
-});
-
-// Handle 404
-app.use((req, res) => {
-    res.status(404).send('Page Not Found');
-});
-
-// Start the server only after the store service is initialized
 storeService.initialize()
     .then(() => {
-        app.listen(process.env.PORT || 8080, () => {
-            console.log('Server listening on port 8080');
+        app.get('/shop', (req, res) => {
+            storeService.getPublishedItems()
+                .then(data => res.json(data)) 
+                .catch(err => res.status(500).json({ message: err }));
+        });
+
+        app.get('/items', (req, res) => {
+            storeService.getAllItems()
+                .then(data => res.json(data))  
+                .catch(err => res.status(500).json({ message: err }));
+        });
+
+
+        app.get('/categories', (req, res) => {
+            storeService.getCategories()
+                .then(data => res.json(data))  
+                .catch(err => res.status(500).json({ message: err }));
+        });
+
+
+        app.get('/item/:id', (req, res) => {
+            const id = parseInt(req.params.id);
+            const item = items.find(i => i.id === id);
+            if (!item) {
+                return res.status(404).json({ message: 'Item not found.' });
+            }
+            res.json(item); 
+        });
+
+
+        app.delete('/delete-item/:id', (req, res) => {
+            const id = parseInt(req.params.id);
+            const index = items.findIndex(item => item.id === id);
+            if (index === -1) {
+                return res.status(404).json({ message: 'Item not found.' });
+            }
+
+
+            items.splice(index, 1);
+
+            fs.writeFile(path.join(__dirname, 'data', 'items.json'), JSON.stringify(items, null, 2), (err) => {
+                if (err) {
+                    return res.status(500).json({ message: 'Error deleting item.' });
+                }
+                res.json({ message: 'Item deleted successfully.' });
+            });
+        });
+
+        app.get('*', (req, res) => {
+            res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
+        });
+
+        const PORT = process.env.PORT || 8080;
+        app.listen(PORT, () => {
+            console.log(`Express http server listening on port ${PORT}`);
         });
     })
     .catch(err => {
-        console.log('Unable to start server: ', err);
+        console.error(`Error initializing data: ${err}`); 
     });

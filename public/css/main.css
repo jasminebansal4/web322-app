@@ -1,8 +1,21 @@
 body {
-    background-color: #f8f9fa;
-    font-family: Arial, sans-serif;
-  }
-  h2 {
-    color: #007bff;
-  }
-  
+  font-family: 'Roboto', sans-serif; 
+  background-color: #3a3a3b; 
+  color: #ffffff; 
+}
+
+h1, h2, h3 {
+  color: #658cf0; 
+}
+
+.navbar {
+  background-color: #787774;
+}
+
+.navbar-nav .nav-link {
+  color: #fff; 
+}
+
+.navbar-nav .nav-link:hover {
+  color: #007BFF; 
+}
