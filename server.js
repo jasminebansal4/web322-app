@@ -1,92 +1,105 @@
-// https://render.com/docs/node-version  DEPLOYMENT LINK
-/*********************************************************************************
-WEB322 – Assignment 02
-I declare that this assignment is my own work in accordance with Seneca Academic Policy. No part * of this assignment has
-been copied manually or electronically from any other source (including 3rd party web sites) or distributed to other students.
-Name: _Jasmine_____________________
-Student ID: __101594232____________
-Date: ________________09-10-2024
-Cyclic Web App URL: _______________________________________________________
-GitHub Repository URL: ______________________________________________________
-********************************************************************************/
-
+// server.js
 const express = require('express');
 const path = require('path');
+const multer = require("multer");
 const storeService = require('./store-service');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
+const upload = multer();
 
+// Serve static files from the "public" directory
 app.use(express.static('public'));
 
-
+// Redirect root URL to /about
 app.get('/', (req, res) => {
     res.redirect('/about');
 });
 
+// About page route
 app.get('/about', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'about.html'));
 });
 
+// Endpoint to serve the add item page
+app.get('/items/add', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'addItem.html')); // Ensure the path is correct
+});
+
+
+// Items route with optional filtering
+app.use(express.json());
+
+// Route to get items with optional filters
+app.get('/items', (req, res) => {
+    const category = req.query.category;
+    const minDate = req.query.minDate;
+
+    // Handle filtering based on query parameters
+    if (category) {
+        storeService.getItemsByCategory(category)
+            .then(items => {
+                res.json(items);
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            });
+    } else if (minDate) {
+        storeService.getItemsByMinDate(minDate)
+            .then(items => {
+                res.json(items);
+            })
+            .catch(err => {
+                res.status(404).send(err);
+            });
+    } else {
+        storeService.getAllItems()
+            .then(items => {
+                res.json(items);
+            })
+            .catch(err => {
+                res.status(500).send(err);
+            });
+    }
+});
+
+app.get('/categories', (req, res) => {
+    storeService.getAllCategories()
+        .then(categories => res.json(categories))
+        .catch(err => res.status(500).send(err));
+});
+
+// Route to get a single item by ID
+app.get('/item/:id', (req, res) => {
+    const id = parseInt(req.params.id, 10);
+
+    storeService.getItemById(id)
+        .then(item => {
+            if (item) {
+                res.json(item);
+            } else {
+                res.status(404).json({ message: 'Item not found' });
+            }
+        })
+        .catch(err => res.status(500).json({ message: 'Error retrieving item', error: err }));
+});
+
+// Handle 404 errors
+app.get('*', (req, res) => {
+    res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
+});
+
+// Initialize store service and start server
 storeService.initialize()
     .then(() => {
-        app.get('/shop', (req, res) => {
-            storeService.getPublishedItems()
-                .then(data => res.json(data)) 
-                .catch(err => res.status(500).json({ message: err }));
-        });
+        console.log('Initialization complete');
 
-        app.get('/items', (req, res) => {
-            storeService.getAllItems()
-                .then(data => res.json(data))  
-                .catch(err => res.status(500).json({ message: err }));
-        });
-
-
-        app.get('/categories', (req, res) => {
-            storeService.getCategories()
-                .then(data => res.json(data))  
-                .catch(err => res.status(500).json({ message: err }));
-        });
-
-
-        app.get('/item/:id', (req, res) => {
-            const id = parseInt(req.params.id);
-            const item = items.find(i => i.id === id);
-            if (!item) {
-                return res.status(404).json({ message: 'Item not found.' });
-            }
-            res.json(item); 
-        });
-
-
-        app.delete('/delete-item/:id', (req, res) => {
-            const id = parseInt(req.params.id);
-            const index = items.findIndex(item => item.id === id);
-            if (index === -1) {
-                return res.status(404).json({ message: 'Item not found.' });
-            }
-
-
-            items.splice(index, 1);
-
-            fs.writeFile(path.join(__dirname, 'data', 'items.json'), JSON.stringify(items, null, 2), (err) => {
-                if (err) {
-                    return res.status(500).json({ message: 'Error deleting item.' });
-                }
-                res.json({ message: 'Item deleted successfully.' });
-            });
-        });
-
-        app.get('*', (req, res) => {
-            res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
-        });
-
-        const PORT = process.env.PORT || 8080;
+        // Start listening for requests
         app.listen(PORT, () => {
             console.log(`Express http server listening on port ${PORT}`);
         });
     })
     .catch(err => {
-        console.error(`Error initializing data: ${err}`); 
+        console.error(`Error initializing data: ${err}`);
     });
