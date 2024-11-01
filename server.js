@@ -24,7 +24,7 @@ app.get('/about', (req, res) => {
 
 // Endpoint to serve the add item page
 app.get('/items/add', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'addItem.html')); // Ensure the path is correct
+    res.sendFile(path.join(__dirname, 'views', 'addItem.html')); 
 });
 
 
