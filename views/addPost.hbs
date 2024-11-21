@@ -1,0 +1,29 @@
+<!-- addItem.hbs -->
+<form action="/items/add" method="POST">
+    <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="title" name="title" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="category" class="form-label">Category</label>
+        <input type="text" class="form-control" id="category" name="category" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="price" class="form-label">Price</label>
+        <input type="number" class="form-control" id="price" name="price" required />
+    </div>
+
+    <div class="mb-3">
+        <label for="body" class="form-label">Description</label>
+        <textarea class="form-control" id="body" name="body" required></textarea>
+    </div>
+
+     <div class="mb-3">
+        <label for="featureImage" class="form-label">Feature Image URL</label>
+        <input type="text" class="form-control" id="featureImage" name="featureImage" required />
+    </div> 
+
+    <button type="submit" class="btn btn-primary">Add Item</button>
+</form>

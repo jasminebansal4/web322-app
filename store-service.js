@@ -1,19 +1,24 @@
 const fs = require('fs');
 const path = require('path');
 
-// Load your data files
 let items = []; // Array to hold items
 let categories = []; // Array to hold categories
 
+// Function to initialize the service by loading items and categories from JSON files
 function initialize() {
     return new Promise((resolve, reject) => {
+        // Read the items.json file
         fs.readFile(path.join(__dirname, 'data', 'items.json'), 'utf8', (err, data) => {
             if (err) {
+                console.error("Error loading items.json:", err); // Log the error
                 reject('Unable to load items data: ' + err);
             } else {
                 items = JSON.parse(data);
+
+                // Read the categories.json file
                 fs.readFile(path.join(__dirname, 'data', 'categories.json'), 'utf8', (err, data) => {
                     if (err) {
+                        console.error("Error loading categories.json:", err); // Log the error
                         reject('Unable to load categories data: ' + err);
                     } else {
                         categories = JSON.parse(data);
@@ -24,6 +29,7 @@ function initialize() {
         });
     });
 }
+
 
 // Function to get all items
 function getAllItems() {
@@ -36,6 +42,7 @@ function getAllItems() {
     });
 }
 
+// Function to get all categories
 function getAllCategories() {
     return new Promise((resolve, reject) => {
         if (categories.length > 0) {
@@ -71,23 +78,66 @@ function getItemsByMinDate(minDateStr) {
 }
 
 // Function to get item by ID
+// In store-service.js
 function getItemById(id) {
     return new Promise((resolve, reject) => {
-        const item = items.find(item => item.id === parseInt(id));
-        if (item) {
-            resolve(item);
+        getAllItems().then((items) => {
+            if (Array.isArray(items)) {
+                const item = items.find(i => i.id === id);  // Ensure we're using the same type for comparison
+                if (item) {
+                    resolve(item);
+                } else {
+                    reject(new Error('Item not found'));
+                }
+            } else {
+                reject(new Error('Items data is not an array'));
+            }
+        }).catch((err) => {
+            reject(err);
+        });
+    });
+}
+
+
+
+
+
+function getPublishedItemsByCategory(category) {
+    return new Promise((resolve, reject) => {
+        const publishedItems = items.filter(item => item.published === true && item.category === category);
+        if (publishedItems.length > 0) {
+            resolve(publishedItems);
         } else {
-            reject('No result returned for ID: ' + id);
+            reject("No published items found for this category.");
         }
     });
 }
 
-// Export functions
+// In store-service.js
+
+function addItem(itemData) {
+    return new Promise((resolve, reject) => {
+        try {
+            // Assuming items is an array of objects that stores all items
+            items.push(itemData);  // Add new item to the array
+            console.log('Item added to items array:', itemData);
+            resolve();  // Resolve the promise once the item is added
+        } catch (err) {
+            console.error('Error adding item to array:', err);
+            reject(err);  // Reject the promise if there's an error
+        }
+    });
+}
+
+
+// Export functions for use in other files
 module.exports = {
     initialize,
+    addItem,
     getAllItems,
     getAllCategories,
     getItemsByCategory,
     getItemsByMinDate,
     getItemById,
+    getPublishedItemsByCategory,
 };
