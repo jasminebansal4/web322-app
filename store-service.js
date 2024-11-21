@@ -1,55 +1,53 @@
 const fs = require('fs');
 const path = require('path');
 
-let items = []; // Array to hold items
-let categories = []; // Array to hold categories
+// Arrays to hold items and categories
+let items = [];
+let categories = [];
 
-// Function to initialize the service by loading items and categories from JSON files
+// Function to initialize the service by loading JSON files
 function initialize() {
     return new Promise((resolve, reject) => {
-        // Read the items.json file
         fs.readFile(path.join(__dirname, 'data', 'items.json'), 'utf8', (err, data) => {
             if (err) {
-                console.error("Error loading items.json:", err); // Log the error
-                reject('Unable to load items data: ' + err);
-            } else {
-                items = JSON.parse(data);
-
-                // Read the categories.json file
-                fs.readFile(path.join(__dirname, 'data', 'categories.json'), 'utf8', (err, data) => {
-                    if (err) {
-                        console.error("Error loading categories.json:", err); // Log the error
-                        reject('Unable to load categories data: ' + err);
-                    } else {
-                        categories = JSON.parse(data);
-                        resolve();
-                    }
-                });
+                console.error("Error loading items.json:", err);
+                return reject('Unable to load items data.');
             }
+            try {
+                items = JSON.parse(data);
+            } catch (parseErr) {
+                return reject('Error parsing items.json: ' + parseErr.message);
+            }
+
+            fs.readFile(path.join(__dirname, 'data', 'categories.json'), 'utf8', (err, data) => {
+                if (err) {
+                    console.error("Error loading categories.json:", err);
+                    return reject('Unable to load categories data.');
+                }
+                try {
+                    categories = JSON.parse(data);
+                    resolve(); // Resolve after both files are successfully loaded
+                } catch (parseErr) {
+                    reject('Error parsing categories.json: ' + parseErr.message);
+                }
+            });
         });
     });
 }
 
-
 // Function to get all items
 function getAllItems() {
     return new Promise((resolve, reject) => {
-        if (items.length > 0) {
-            resolve(items);
-        } else {
-            reject('No items found.');
-        }
+        if (items.length > 0) resolve(items);
+        else reject('No items found.');
     });
 }
 
 // Function to get all categories
 function getAllCategories() {
     return new Promise((resolve, reject) => {
-        if (categories.length > 0) {
-            resolve(categories);
-        } else {
-            reject('No categories found.');
-        }
+        if (categories.length > 0) resolve(categories);
+        else reject('No categories found.');
     });
 }
 
@@ -57,11 +55,8 @@ function getAllCategories() {
 function getItemsByCategory(category) {
     return new Promise((resolve, reject) => {
         const filteredItems = items.filter(item => item.category === parseInt(category));
-        if (filteredItems.length > 0) {
-            resolve(filteredItems);
-        } else {
-            reject('No results returned for category: ' + category);
-        }
+        if (filteredItems.length > 0) resolve(filteredItems);
+        else reject('No items found for category: ' + category);
     });
 }
 
@@ -69,75 +64,49 @@ function getItemsByCategory(category) {
 function getItemsByMinDate(minDateStr) {
     return new Promise((resolve, reject) => {
         const filteredItems = items.filter(item => new Date(item.postDate) >= new Date(minDateStr));
-        if (filteredItems.length > 0) {
-            resolve(filteredItems);
-        } else {
-            reject('No results returned for minimum date: ' + minDateStr);
-        }
+        if (filteredItems.length > 0) resolve(filteredItems);
+        else reject('No items found after the date: ' + minDateStr);
     });
 }
 
-// Function to get item by ID
-// In store-service.js
+// Function to get an item by ID
 function getItemById(id) {
     return new Promise((resolve, reject) => {
-        getAllItems().then((items) => {
-            if (Array.isArray(items)) {
-                const item = items.find(i => i.id === id);  // Ensure we're using the same type for comparison
-                if (item) {
-                    resolve(item);
-                } else {
-                    reject(new Error('Item not found'));
-                }
-            } else {
-                reject(new Error('Items data is not an array'));
-            }
-        }).catch((err) => {
-            reject(err);
-        });
+        const item = items.find(item => item.id === parseInt(id));
+        if (item) resolve(item);
+        else reject('No item found with ID: ' + id);
     });
 }
 
-
-
-
-
+// Function to get published items by category
 function getPublishedItemsByCategory(category) {
     return new Promise((resolve, reject) => {
-        const publishedItems = items.filter(item => item.published === true && item.category === category);
-        if (publishedItems.length > 0) {
-            resolve(publishedItems);
-        } else {
-            reject("No published items found for this category.");
-        }
+        const publishedItems = items.filter(item => item.published === true && item.category === parseInt(category));
+        if (publishedItems.length > 0) resolve(publishedItems);
+        else reject('No published items found for category: ' + category);
     });
 }
 
-// In store-service.js
-
+// Function to add a new item
 function addItem(itemData) {
     return new Promise((resolve, reject) => {
         try {
-            // Assuming items is an array of objects that stores all items
-            items.push(itemData);  // Add new item to the array
-            console.log('Item added to items array:', itemData);
-            resolve();  // Resolve the promise once the item is added
+            items.push(itemData); // Add the new item to the array
+            resolve();
         } catch (err) {
-            console.error('Error adding item to array:', err);
-            reject(err);  // Reject the promise if there's an error
+            reject('Error adding item: ' + err.message);
         }
     });
 }
 
-
-// Export functions for use in other files
+// Export functions for use in other modules
 module.exports = {
     initialize,
-    addItem,
     getAllItems,
     getAllCategories,
     getItemsByCategory,
     getItemsByMinDate,
     getItemById,
     getPublishedItemsByCategory,
+    addItem
 };
