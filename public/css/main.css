@@ -1,0 +1,11 @@
+body {
+    font-family: Arial, sans-serif;
+    padding-top: 62px; 
+}
+h2 {
+    color: blue;
+}
+
+.navbar-nav .nav-item {
+    margin-right: 10px; 
+}
