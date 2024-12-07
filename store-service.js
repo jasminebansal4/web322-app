@@ -6,10 +6,11 @@ const sequelize = new Sequelize("Web_322_assignment", "postgres", "Sushma@06", {
     dialect: "postgres",
     port: 5432,
     dialectOptions: {
-        ssl: { rejectUnauthorized: false },
+        ssl: false, // Disable SSL
     },
     query: { raw: true },
 });
+
 
 // Define the "Category" model
 const Category = sequelize.define('Category', {
